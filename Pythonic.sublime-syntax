@@ -1,0 +1,237 @@
+%YAML 1.2
+---
+scope: source.python
+file_extensions: [py]
+first_line_match: ^#!.*python(\d(\.\d)?)?
+
+variables:
+  re_name: (_*[a-z][A-Za-z\d_]*)
+  re_object: (?:{{re_name}}(\.))*{{re_name}}
+  re_type: (bool|bytes|dict|int|list|set|str)
+
+contexts:
+  main:
+    - include: Class
+    - include: Function
+    - include: Block
+    - include: Value
+    - match: (:)
+      scope: punctuation.definition.statement.end.python
+
+  # Entity
+
+  Modules:
+    - match: \b(from)\b\s+{{re_object}}
+      captures:
+        1: keyword.control.from.python
+        2: entity.name.module.python
+        3: punctuation.accessor.python
+        4: entity.name.module.python
+    - match: \b(import)\b\s+(\*)
+      captures:
+        1: keyword.control.import.python
+        2: keyword.star.python
+    - match: \b(import)\b\s+{{re_object}}
+      captures:
+        1: keyword.control.import.python
+        2: entity.name.module.python
+        3: punctuation.accessor.python
+        4: entity.name.module.python
+
+  Class:
+    - match: \b(class)\b\s+{{re_name}}
+      captures:
+        1: keyword.declaration.class.python
+        2: entity.name.class.python
+
+  Function:
+    - match: \b(def)\b\s+{{re_name}}(\()
+      captures:
+        1: keyword.declaration.function.python
+        2: variable.function.python
+        3: punctuation.definition.params.begin.python
+      push: ParameterListEnd
+
+  FnCall:
+    - match: '\b{{re_type}}(\()'
+      captures:
+        1: storage.type.python
+        2: punctuation.definition.params.begin.python
+      push: ParameterListEnd
+
+    - match: '{{re_name}}(\()'
+      captures:
+        1: variable.function.python
+        2: punctuation.definition.params.begin.python
+      push: ParameterListEnd
+
+  # Generic
+
+  Block:
+    - match: \{
+      scope: punctuation.definition.block.begin.python
+      push:
+        - match: (:)
+          scope: keyword.operator.assignment.python
+        - include: Value
+        - match: \}
+          scope: punctuation.definition.block.end.python
+          pop: true
+
+  ParameterListEnd:
+    - match: (:)
+      scope: punctuation.type.indicator.python
+    - include: Value
+    - match: \)
+      scope: punctuation.definition.params.end.python
+      pop: true
+
+  Value:
+    - include: Modules
+    - include: Comment
+    - include: String
+    - include: Number
+    - include: FnCall
+    - include: Keyword
+    - include: Operator
+    - include: Punctuation
+    - match: \b{{re_name}}\b
+      scope: variable.other.python
+
+  # Language
+
+  Keyword:
+      # Constants
+    - match: \b(None)\b
+      scope: constant.language.python
+    - match: \b(True|False)\b
+      scope: constant.language.boolean.python
+
+      # Control
+    - match: \b(if|else|for|while|return|break|continue)\b
+      scope: keyword.control.flow.python
+
+      # Language
+    - match: \b(assert)\b
+      scope: keyword.language.assert.python
+    - match: \b(typeof)\b
+      scope: keyword.language.python
+    - match: \b(cls|self)\b
+      scope: keyword.language.python
+    - match: \b(app|ctx|this)\b
+      scope: constant.language.python
+
+      # Operator
+    - match: \b(and|or|not)\b
+      scope: keyword.operator.logic.python
+    - match: \b(is)\b
+      scope: keyword.operator.comparison.python
+    - match: \b(in)\b
+      scope: keyword.operator.access.python
+
+      # Type
+    - match: \b{{re_type}}\b
+      scope: storage.type.python
+
+  Operator:
+    - match: (->)
+      scope: punctuation.arrow.python
+    - match: ([+*/%:&\|^:]?=)
+      scope: keyword.operator.assignment.python
+    - match: (<<|>>)=
+      scope: keyword.operator.assignment.python
+    - match: ([+*/%-])
+      scope: keyword.operator.arithmetic.python
+    - match: ([&\|^~])
+      scope: keyword.operator.bitwise.python
+    - match: (!|\|\||&&)
+      scope: keyword.operator.logical.python
+    - match: (<<|>>)
+      scope: keyword.operator.shift.python
+    - match: ([=!<>]=)|<|>
+      scope: keyword.operator.comparison.python
+
+  Punctuation:
+    - match: \,
+      scope: punctuation.separator.python
+    - match: \.
+      scope: punctuation.accessor.python
+
+  # Common
+
+  Comment:
+    - match: \#
+      scope: punctuation.definition.comment.begin.python
+      push:
+        - meta_scope: comment.line.python
+        - include: CommentTag
+        - include: EOL
+
+  CommentTag:
+    - match: \b(TODO|todo):\s.*$
+      scope: comment.tag.todo.python
+    - match: \b(!!|FIXME|fixme):\s.*$
+      scope: comment.tag.fixme.python
+    - match: \b(ht|f)tps?://(www.)?[A-Za-z]\S+
+      scope: comment.tag.url.python
+
+  String:
+    - include: Docstring
+    - include: StringDouble
+    - include: StringSingle
+
+  Docstring:
+    - match: \"\"\"
+      scope: punctuation.definition.docstring.begin.python
+      push:
+      - meta_scope: comment.docstring.python
+        # todo: reStructuredText style documentation
+      - include: CommentTag
+      - include: StringAll
+      - match: \"\"\"
+        scope: punctuation.definition.docstring.end.python
+        pop: true
+
+  StringDouble:
+    - match: \"
+      scope: punctuation.definition.string.begin.python
+      push:
+      - meta_scope: string.quoted.double.python
+      - include: StringAll
+      - match: \"
+        scope: punctuation.definition.string.end.python
+        pop: true
+
+  StringSingle:
+    - match: \'
+      scope: punctuation.definition.string.begin.python
+      push:
+      - meta_scope: string.quoted.single.python
+      - include: StringAll
+      - match: \'
+        scope: punctuation.definition.string.end.python
+        pop: true
+
+  StringAll:
+    - match: \\([\\nrtbf''"]|x\h{2}|[0-7]{,3})
+      scope: constant.character.escape.python
+
+  Number:
+    - match: \b([\d_]+(\.[\d_]+)?e[\+\-]?\d+)\b
+      scope: constant.numeric.scientific.python
+    - match: \b(0b[01_]+)\b
+      scope: constant.numeric.binary.python
+    - match: \b(0o[0-7_]+)\b
+      scope: constant.numeric.octal.python
+    - match: \b(0x[\h_]+)\b
+      scope: constant.numeric.hexadecimal.python
+    - match: \b([\d_]+\.[\d_]+)(\.\d+)*\b
+      captures:
+        1: constant.numeric.decimal.python
+        2: invalid.illegal.python
+    - match: \b([\d_]+)\b
+      scope: constant.numeric.python
+
+  EOL:
+    - match: $
+      pop: true

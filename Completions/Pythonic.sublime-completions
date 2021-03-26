@@ -1,0 +1,30 @@
+{
+  "scope": "source.python",
+  "completions": [
+    { "trigger": "b", "contents": "break" },
+    { "trigger": "c", "contents": "continue" },
+    { "trigger": "p", "contents": "pass" },
+    { "trigger": "r", "contents": "return " },
+
+    { "trigger": "l", "contents": "len($0)" },
+    { "trigger": "ll", "contents": "list($0)" },
+    { "trigger": "r", "contents": "range($0)" },
+    { "trigger": "s", "contents": "str($0)" },
+
+    { "trigger": "pp", "contents": "print($0)" },
+    { "trigger": "dd", "contents": "print(f' > $0: [{$0}]')" },
+
+    { "trigger": "_i", "contents": "def __init__(self$1):$0" },
+    { "trigger": "_s", "contents": "def __str__(self) -> str:$0" },
+
+    { "trigger": "_pp", "contents": "@property" },
+    { "trigger": "_set", "contents": "@$0.setter" },
+    { "trigger": "_del", "contents": "@$0.deleter" },
+    { "trigger": "_cm", "contents": "@classmethod" },
+    { "trigger": "_sm", "contents": "@staticmethod" },
+
+    { "trigger": "false", "contents": "False" },
+    { "trigger": "true", "contents": "True" },
+    { "trigger": "none", "contents": "None" }
+  ]
+}
